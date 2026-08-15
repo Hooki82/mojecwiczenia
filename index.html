@@ -1,0 +1,845 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyWorkout 4.4 TV Edition</title>
+<style>
+:root{--bg:#05070b;--card:#121826;--green:#22c55e;--blue:#3b82f6;--red:#ef4444;--txt:#f8fafc;--muted:#94a3b8}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top left,#12324d 0%,transparent 30%),radial-gradient(circle at top right,#173d2b 0%,transparent 30%),linear-gradient(180deg,#05070b,#0b1220);color:var(--txt);font-family:Segoe UI,Arial;overflow-x:hidden}
+.hidden{display:none}
+.glass{background:rgba(18,24,38,.96);border:1px solid rgba(255,255,255,.05);border-radius:18px;padding:12px;box-shadow:0 10px 25px rgba(0,0,0,.45)}
+#gate{height:100vh;display:flex;align-items:center;justify-content:center;text-align:center}
+#secret{cursor:pointer}.fake{margin-top:16px;opacity:.7}
+header{display:flex;justify-content:center;gap:10px;padding:8px 14px}
+.timer{flex:0 0 320px;text-align:center;font-weight:700;font-size:20px;min-height:85px;padding:8px}
+.timer span{display:block;font-size:28px;letter-spacing:2px;margin:2px 0 6px}
+
+
+nav{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    padding:6px 14px;
+    flex-wrap:wrap;
+}
+
+
+button{background:#243041;color:#fff;border:none;border-radius:12px;padding:8px 12px;font-size:14px;cursor:pointer;margin:2px}
+.page{padding:12px 14px}
+.grid{display:grid;grid-template-columns:20% 34% 46%;gap:12px;align-items:start;width:100%;overflow:hidden}.grid>*{min-width:0}
+.panel{min-height:auto}
+.panel img{width:100%;height:100%;max-height:380px;object-fit:contain;border-radius:14px;background:#111;display:block;margin:auto}
+.panel iframe{width:100%;max-width:100%;height:280px;border:0;border-radius:14px;background:#111}
+input,select,textarea{padding:8px;border-radius:10px;border:1px solid #475569;background:#111827;color:#fff;width:100%}
+.card{margin:8px 0;padding:10px;border-radius:14px;background:#0f172a}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.small{font-size:12px;color:#cbd5e1}
+
+
+#counter{
+    font-size:22px;
+    color:var(--green);
+    margin-bottom:10px;
+    text-align:center;
+    line-height:1.4;
+}
+
+
+
+
+
+#historyBox,#settingsBox{max-height:70vh;overflow:auto}
+.seriesGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.seriesCard{background:#0f172a;border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:10px;text-align:center}
+.seriesTitle{color:var(--green);font-weight:700}
+.seriesValue{font-size:22px;font-weight:700;margin:8px 0}
+.seriesInputs{display:flex;gap:6px}
+
+.theme-tv{background:#000!important;color:#fff!important}
+.theme-tv .glass,.theme-tv .card,.theme-tv .panel{background:#0f0f0f!important;border:1px solid #222!important}
+.exercise-image,img#img{
+    width:100%;
+    height:100%;
+    max-height:380px;
+    object-fit:contain;
+    display:block;
+    margin:auto;
+}
+</style>
+</head>
+<body>
+
+<div id="gate">
+<div class="glass">
+<h1>💪 MyWorkout</h1>
+<h2>Dlaczego hantel poszedł do lekarza?</h2>
+<p style="font-size:28px">Bo miał za duży <span id="secret">ciężar</span>.</p>
+<div class="glass fake">Dalej</div>
+</div>
+</div>
+
+<div id="app" class="hidden">
+
+<header>
+<div class="glass timer">
+
+<span id="wt">00:00:00</span><br>
+<button onclick="startWorkoutClock()">Start</button>
+<button onclick="pauseWorkoutClock()">Pauza</button>
+<button onclick="resetWorkoutClock()">Reset</button>
+</div>
+
+<div class="glass timer">
+
+<span id="rt">01:30</span><br>
+<button onclick="startRest()">Start</button>
+<button onclick="pauseRest()">Pauza</button>
+<button onclick="resetRest()">Reset</button>
+</div>
+</header>
+
+<button id="themeToggle" onclick="toggleTheme()" style="position:fixed;top:10px;right:10px;z-index:9999;border-radius:50%;width:42px;height:42px">🌙</button>
+<nav>
+<button onclick="showPage('start')">Start</button>
+<button onclick="showPage('training')">Trening</button>
+<button onclick="showPage('history')">Historia</button>
+<button onclick="showPage('stats')">Statystyki</button>
+<button onclick="showPage('settings')">Ustawienia</button>
+</nav>
+
+<section id="start" class="page">
+<div class="glass">
+<h1>Wybierz ćwiczenia</h1>
+<div id="picker"></div>
+<button onclick="startWorkout()">START TRENINGU</button>
+</div>
+</section>
+
+
+
+
+
+
+<section id="training" class="page hidden">
+<div class="glass">
+<h2 id="counter"></h2>
+
+<div class="grid">
+
+<div class="glass panel">
+<img id="img" src="">
+</div>
+
+<div class="glass panel">
+
+
+
+
+
+<div id="series"></div>
+
+<div style="display:flex;
+            justify-content:center;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:10px;">
+
+    <button onclick="addSeries()">+ Seria</button>
+
+    <button onclick="removeSeries()">- Seria</button>
+
+    <label style="
+        display:flex;
+        align-items:center;
+        gap:6px;
+        white-space:nowrap;
+        cursor:pointer;
+        color:#fff;
+        font-size:14px;
+    ">
+        <input id="progressFlag" type="checkbox" style="width:auto;">
+        Zwiększ ciężar następnym razem
+    </label>
+
+</div>
+
+<hr>
+
+
+
+
+
+
+
+<button onclick="prevEx()">Poprzednie</button>
+<button onclick="nextEx()">Następne</button>
+<button onclick="finishWorkout()">Zakończ trening</button>
+</div>
+
+<div class="glass panel">
+
+<div id="videoBox">
+<iframe id="yt" allowfullscreen></iframe>
+</div>
+
+
+
+
+
+
+
+
+<div id="descriptionBox" class="hidden">
+<div id="exerciseDescription" style="padding:12px;line-height:1.7;white-space:pre-wrap"></div>
+</div>
+
+<div style="display:flex;justify-content:space-between;gap:6px;margin-top:10px;width:100%">
+<button onclick="showDescription()">◀ Opis</button>
+<button onclick="showVideo()">Video ▶</button>
+</div>
+
+</div>
+
+</div>
+</div>
+</section>
+
+<section id="history" class="page hidden">
+<div class="glass">
+<h2>Historia</h2>
+<div id="historyBox"></div>
+<button onclick="clearHistory()">Usuń wszystko</button>
+</div>
+</section>
+
+<section id="stats" class="page hidden">
+<div class="glass">
+<h2>Statystyki</h2>
+<div id="statsBox"></div>
+</div>
+</section>
+
+<section id="settings" class="page hidden">
+<div class="glass">
+<h2>Ustawienia</h2>
+
+<div class="card">
+<h3>Nowa kategoria</h3>
+<div class="row">
+<input id="newCategory" placeholder="Nazwa kategorii">
+<button onclick="addCategory()">Dodaj kategorię</button>
+</div>
+</div>
+
+<div class="card">
+<h3>Kopia zapasowa</h3>
+
+<div class="row">
+<button onclick="exportData()">📤 Eksport danych</button>
+
+<button onclick="document.getElementById('importFile').click()">
+📥 Import danych
+</button>
+
+<input
+ id="importFile"
+ type="file"
+ accept=".json"
+ style="display:none"
+ onchange="importData(event)">
+</div>
+</div>
+
+<div id="settingsBox"></div>
+</div>
+</section>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+
+
+const defaults={
+
+"Rozciąganie":[
+{name:"Mobilizacja pleców",img:"",video:"https://www.youtube.com/watch?v=kF9Qdx2MP5o",description:"Joga na zdrowy kręgosłup"}
+],
+
+"Klatka":[
+{name:"Pompki",img:"",video:"",description:""},
+{name:"Klatka na ławce skośnej",img:"https://gorillasports.pl/usr/wyciskanie-hantli-na-lawce-skosnej.jpg",video:"https://www.youtube.com/watch?v=Pqde13uj33E&t=126s",description:""},
+{name:"Klatka na ławce skośnej ze sztangą",img:"https://static.strengthlevel.com/images/exercises/close-grip-incline-bench-press/close-grip-incline-bench-press-800.avif",video:"",description:""},
+{name:"Rozpiętki",img:"https://static.strengthlevel.com/images/exercises/dumbbell-fly/dumbbell-fly-800.avif",video:"https://www.youtube.com/watch?v=w86EalEoFRY&t=104s",description:""},
+{name:"Rozpiętki na skośnej",img:"https://gorillasports.pl/usr/rozpietki-na-lawce-skosnej.jpg",video:"",description:"Weź głęboki wdech, napnij mięśnie brzucha i unieś sztangielki mocno na boki. Twoje ramiona powinny znaleźć się w pozycji równoległej do podłogi;"}
+],
+
+"Plecy":[
+{name:"Wiosłowanie hantlami w podporze o ławkę skośną",img:"https://static.strengthlevel.com/images/exercises/chest-supported-dumbbell-row/chest-supported-dumbbell-row-800.avif",video:"https://www.youtube.com/watch?v=Yz6GsdEOid4&t=152s",description:""},
+{name:"Wiosłowanie sztangą w podporze o ławkę skośną",img:"https://fitwill.app/_next/image?url=%2Fapi%2Fimage%2F1317%3Fw%3D1024%26h%3D576&w=1080&q=75",video:"",description:""}
+],
+
+"Barki":[
+{name:"Wyciskanie hantli siedząc",img:"https://static.strengthlevel.com/images/exercises/seated-dumbbell-shoulder-press/seated-dumbbell-shoulder-press-800.avif",video:"https://www.youtube.com/watch?v=61oINfWr5Gc&t=82s",description:""},
+{name:"Wyciskanie hantli z obrotem siedząc",img:"",video:"https://static.strengthlevel.com/images/exercises/seated-dumbbell-shoulder-press/seated-dumbbell-shoulder-press-800.avif",description:""},
+{name:"Unoszenie ramion w przód",img:"http://www.kulturysta.net/wp-content/uploads/2014/02/barki-hantla-przod.jpg",video:"https://www.youtube.com/watch?v=huB9VTclj_g&t=291s",description:""},
+{name:"Rozpiętki na barki \"szrugsy\"",img:"https://www.sfd.pl/SFD/articles/content/2023/4/3/2023-04-03f1bdf6482e2b431b8d51e22e7c9d9157.webp",video:"https://www.youtube.com/watch?v=vY7a2KH7iKY&t=27s",description:""}
+],
+
+"Triceps":[
+{name:"Uginanie francuskie na ławce skośnej",img:"https://fitwill.app/_next/image?url=%2Fapi%2Fimage%2F4344%3Fw%3D1024%26h%3D576&w=1080&q=75",video:"https://www.youtube.com/watch?v=77RWLO-SQlE&t=72s",description:"Zginaj tylko w łokciach, aby opuścić sztangę po łuku za czoło, utrzymując ramiona w dużej mierze nieruchome. Opuszczaj do momentu, aż tricepsy będą w pełni obciążone, ale barki pozostaną stabilne, a sztanga pod kontrolą. Wypchnij sztangę z powrotem w górę, prostując łokcie, aż ramiona będą ponownie wyprostowane."},
+{name:"Uginanie francuskie jednorącz",img:"https://www.projektszesciopak.pl/cked/plugins/kcfinder-2.54/upload/files/hantel_zza_glowy.png",video:"https://www.youtube.com/watch?v=zT1qJTEKlls&list=PLF_aGLnNx8cGc6eMmLcY2khXVj0q65u1j&t=43s",description:"Upewnij się, że łokieć pozostaje blisko głowy przez cały czas trwania ćwiczenia, aby maksymalnie zaangażować triceps. Kontroluj ruch zarówno podczas opuszczania, jak i podnoszenia hantli, unikając gwałtownych ruchów."},
+{name:"Uginanie francuskie wąskim uchwytem",img:"",video:"",description:""},
+{name:"Uginanie francuskie na ławce płaskiej za czoło",img:"",video:"",description:""},
+{name:"Uginanie francuskie na ławce płaskiej do czoła",img:"",video:"",description:""}
+],
+
+"Biceps":[
+{name:"Biceps na modlitewniku",img:"",video:"",description:""},
+{name:"Biceps na skośnej ławce",img:"https://fitwill.app/_next/image?url=%2Fapi%2Fimage%2F0374%3Fw%3D1024%26h%3D576&w=1080&q=75",video:"https://www.youtube.com/watch?v=khjGn3lWJNw&t=55s",description:"Połóż się klatką piersiową na oparciu, podpierając klatkę i górne żebra, a nogi rozstaw wystarczająco szeroko, aby zachować stabilność. Trzymaj hantel w każdej dłoni, mając nadgarstki ustawione w linii z przedramionami, a barki rozluźnione w stronę ławki. Pozwól hantlom zwisać pod barkami przed rozpoczęciem pierwszego powtórzenia. Ugnij oba hantle, zginając łokcie, utrzymując ramiona nieruchomo względem linii ławki. Przyciągnij hantle w stronę przodu barków, nie pozwalając klatce piersiowej oderwać się od oparcia. Zatrzymaj się na chwilę w górnym punkcie, a następnie powoli opuszczaj hantle, aż łokcie będą prawie wyprostowane."},
+{name:"Młotkowe na skos",img:"https://www.sfd.pl/SFD/articles/content/2023/12/1/2023-12-018dd9f7a308674bdba040a6e05b1d4c5e.webp",video:"https://www.youtube.com/watch?v=uVW3kz-piQs&t=57s",description:""},
+{name:"Uginanie ramion nachwytem",img:"https://poradniksportowy.pl/wp-content/uploads/2018/02/5288_1.jpg",video:"https://www.youtube.com/watch?v=zVBA8nBBl3A&list=PLF_aGLnNx8cGc6eMmLcY2khXVj0q65u1j&t=42s",description:""}
+],
+
+"Przedramiona":[
+{name:"Ugięcia nadgarstków w obie strony",img:"",video:"https://poradniksportowy.pl/wp-content/uploads/2018/02/5288_1.jpg",description:""}
+],
+
+"Brzuch":[
+{name:"Dead Bug",img:"",video:"",description:""}
+],
+
+"Nogi":[
+{name:"Przysiady z kettlem",img:"",video:"",description:""}
+]
+
+};
+
+
+let db=JSON.parse(localStorage.getItem("mw44")||"null")||{
+categories:JSON.parse(JSON.stringify(defaults)),
+history:[],
+lastResults:{},
+progressFlags:{}
+};
+
+
+function save(){
+localStorage.setItem("mw44",JSON.stringify(db));
+}
+
+if(localStorage.secretUnlocked==="true"){
+gate.style.display="none";
+app.classList.remove("hidden");
+}
+secret.onclick=()=>{
+localStorage.secretUnlocked="true";
+location.reload();
+};
+
+function showPage(id){
+document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+}
+
+function renderPicker(){
+let h="";
+Object.entries(db.categories).forEach(([cat,list])=>{
+h+=`<h3>${cat}</h3>`;
+list.forEach((e,idx)=>{
+h+=`
+<label style="display:flex;align-items:center;gap:10px;margin:6px 0">
+<input type="checkbox" data-cat="${cat}" data-idx="${idx}" style="width:auto">
+<span>${e.name}</span>
+</label>`;
+});
+});
+picker.innerHTML=h;
+}
+
+let active=[];
+let cur=0;
+
+function startWorkout(){
+active=[...picker.querySelectorAll("input:checked")].map(x=>{
+let e=db.categories[x.dataset.cat][x.dataset.idx];
+return {
+name:e.name,
+img:e.img||"",
+video:e.video||"",
+description:e.description||"",
+series:(db.lastResults&&db.lastResults[e.name])
+ ? JSON.parse(JSON.stringify(db.lastResults[e.name]))
+ : [
+ {r:0,w:0},
+ {r:0,w:0},
+ {r:0,w:0}
+ ]
+};
+});
+
+if(!active.length){
+alert("Wybierz ćwiczenia");
+return;
+}
+
+cur=0;
+showPage("training");
+renderEx();
+}
+
+function ytLink(url){
+if(!url) return "";
+if(url.includes("embed")) return url;
+let m=url.match(/(?:v=|youtu\.be\/)([^&]+)/);
+return m ? "https://www.youtube.com/embed/"+m[1] : url;
+}
+
+function showDescription(){
+videoBox.classList.add("hidden");
+descriptionBox.classList.remove("hidden");
+}
+
+function showVideo(){
+descriptionBox.classList.add("hidden");
+videoBox.classList.remove("hidden");
+}
+
+function renderEx(){
+let e=active[cur];
+
+
+
+counter.innerHTML=`
+<div style="color:#ffffff;font-size:22px;font-weight:700">
+Ćwiczenie ${cur+1}/${active.length}
+</div>
+<div style="color:var(--green);font-size:22px;font-weight:800;margin-top:4px">
+${e.name}
+</div>
+`;
+
+
+
+
+img.src=e.img || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+yt.src=ytLink(e.video);
+exerciseDescription.textContent=e.description||"Brak opisu ćwiczenia";
+const pf = document.getElementById('progressFlag');
+
+if(pf){
+
+    db.progressFlags = db.progressFlags || {};
+
+    pf.checked = !!db.progressFlags[active[cur].name];
+
+    pf.onchange = function(){
+
+        db.progressFlags[active[cur].name] = this.checked;
+
+        save();
+    };
+}
+
+
+series.innerHTML='<div class="seriesGrid">'+e.series.map((s,i)=>`
+<div class="seriesCard">
+<div class="seriesTitle">Seria ${i+1}</div>
+<div class="seriesValue">${s.r} × ${s.w}kg</div>
+<div class="seriesInputs">
+<input value="${s.r}" onchange="active[cur].series[${i}].r=parseInt(this.value)||0;renderEx()">
+<input value="${s.w}" onchange="active[cur].series[${i}].w=parseFloat(this.value)||0;renderEx()">
+</div>
+</div>`).join('')+'</div>';
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function addSeries(){
+active[cur].series.push({r:0,w:0});
+renderEx();
+}
+
+function removeSeries(){
+if(active[cur].series.length>1){
+active[cur].series.pop();
+renderEx();
+}
+}
+
+function nextEx(){
+if(cur<active.length-1){
+cur++;
+renderEx();
+}
+}
+
+function prevEx(){
+if(cur>0){
+cur--;
+renderEx();
+}
+}
+
+function finishWorkout(){
+active.forEach(ex=>{
+  db.lastResults=db.lastResults||{};
+  db.lastResults[ex.name]=JSON.parse(JSON.stringify(ex.series));
+});
+db.history.push({
+date:new Date().toLocaleString(),
+mins:Math.round(workoutSeconds/60),
+ex:active.length
+});
+save();
+renderHistory();
+renderStats();
+showPage("history");
+}
+
+function renderHistory(){
+historyBox.innerHTML=db.history.map((h,i)=>
+`<div class="card">
+${h.date} | ${h.mins} min | ${h.ex} ćw.
+<button onclick="delHist(${i})">Usuń</button>
+</div>`).join("");
+}
+
+function delHist(i){
+db.history.splice(i,1);
+save();
+renderHistory();
+renderStats();
+}
+
+function clearHistory(){
+db.history=[];
+save();
+renderHistory();
+renderStats();
+}
+
+function renderStats(){
+let total=db.history.reduce((a,b)=>a+b.mins,0);
+statsBox.innerHTML=
+`Treningów: ${db.history.length}<br>
+Łączny czas: ${total} min`;
+}
+
+/* USTAWIENIA */
+
+function renderSettings(){
+let h="";
+
+Object.entries(db.categories).forEach(([cat,list])=>{
+
+h+=`
+<div class="card">
+<h3>${cat}</h3>
+
+<div class="row">
+<button onclick="addExercise('${cat}')">+ Ćwiczenie</button>
+<button onclick="deleteCategory('${cat}')">Usuń kategorię</button>
+</div>
+`;
+
+list.forEach((e,i)=>{
+
+h+=`
+<div class="card">
+<b>${e.name}</b>
+
+<div class="small">Zdjęcie URL</div>
+<input value="${e.img||""}" onchange="updateField('${cat}',${i},'img',this.value)">
+
+<div class="small">Video URL</div>
+<input value="${e.video||""}" onchange="updateField('${cat}',${i},'video',this.value)">
+
+<div class="small">Opis ćwiczenia</div>
+<textarea rows="4" onchange="updateField('${cat}',${i},'description',this.value)">${e.description||""}</textarea>
+
+<div class="row">
+<button onclick="editExercise('${cat}',${i})">Edytuj</button>
+<button onclick="deleteExercise('${cat}',${i})">Usuń</button>
+</div>
+</div>
+`;
+
+});
+
+h+="</div>";
+});
+
+settingsBox.innerHTML=h;
+}
+
+function addCategory(){
+let n=newCategory.value.trim();
+if(!n) return;
+if(db.categories[n]) return alert("Kategoria istnieje");
+db.categories[n]=[];
+newCategory.value="";
+save();
+renderSettings();
+renderPicker();
+}
+
+function deleteCategory(cat){
+if(confirm("Usunąć kategorię?")){
+delete db.categories[cat];
+save();
+renderSettings();
+renderPicker();
+}
+}
+
+function addExercise(cat){
+let n=prompt("Nazwa ćwiczenia");
+if(!n) return;
+
+let img=prompt("Link do zdjęcia","")||"";
+let video=prompt("Link do video","")||"";
+
+db.categories[cat].push({
+name:n,
+img:img,
+video:video,
+description:""
+});
+
+save();
+renderSettings();
+renderPicker();
+}
+
+function editExercise(cat,i){
+let e=db.categories[cat][i];
+
+let n=prompt("Nazwa ćwiczenia",e.name);
+if(n===null) return;
+
+let img=prompt("Link do zdjęcia",e.img||"");
+if(img===null) img=e.img||"";
+
+let video=prompt("Link do video",e.video||"");
+if(video===null) video=e.video||"";
+
+db.categories[cat][i]={
+name:n,
+img:img,
+video:video,
+description:e.description||""
+};
+
+save();
+renderSettings();
+renderPicker();
+}
+
+function deleteExercise(cat,i){
+if(confirm("Usunąć ćwiczenie?")){
+db.categories[cat].splice(i,1);
+save();
+renderSettings();
+renderPicker();
+}
+}
+
+function updateField(cat,i,key,val){
+db.categories[cat][i][key]=val;
+save();
+}
+
+/* ZEGAR TRENINGU */
+
+let workoutSeconds=0;
+let workoutInt=null;
+
+function updateWorkoutClock(){
+wt.textContent=[
+Math.floor(workoutSeconds/3600),
+Math.floor(workoutSeconds/60)%60,
+workoutSeconds%60
+].map(v=>String(v).padStart(2,"0")).join(":");
+}
+
+function startWorkoutClock(){
+if(workoutInt) return;
+workoutInt=setInterval(()=>{
+workoutSeconds++;
+updateWorkoutClock();
+},1000);
+}
+
+function pauseWorkoutClock(){
+clearInterval(workoutInt);
+workoutInt=null;
+}
+
+function resetWorkoutClock(){
+pauseWorkoutClock();
+workoutSeconds=0;
+updateWorkoutClock();
+}
+
+/* ZEGAR PRZERWY */
+
+let rest=90;
+let restInt=null;
+
+function updateRest(){
+rt.textContent=
+`${String(Math.floor(rest/60)).padStart(2,"0")}:${String(rest%60).padStart(2,"0")}`;
+}
+
+function startRest(){
+if(restInt) return;
+restInt=setInterval(()=>{
+if(rest>0){
+rest--;
+updateRest();
+}
+},1000);
+}
+
+function pauseRest(){
+clearInterval(restInt);
+restInt=null;
+}
+
+function resetRest(){
+pauseRest();
+rest=90;
+updateRest();
+}
+
+renderPicker();
+renderSettings();
+renderHistory();
+renderStats();
+updateWorkoutClock();
+updateRest();
+
+function applyTheme(){
+ const t=localStorage.getItem('mw_theme')||'classic';
+ document.body.classList.toggle('theme-tv', t==='tv');
+ const b=document.getElementById('themeToggle');
+ if(b) b.textContent = t==='tv' ? '☀️' : '🌙';
+}
+function toggleTheme(){
+ const next = (localStorage.getItem('mw_theme')||'classic')==='tv' ? 'classic' : 'tv';
+ localStorage.setItem('mw_theme', next);
+ applyTheme();
+}
+function exportData(){
+
+    const data = JSON.stringify(db,null,2);
+
+    const blob = new Blob(
+        [data],
+        {type:'application/json'}
+    );
+
+    const a = document.createElement('a');
+
+    a.href = URL.createObjectURL(blob);
+
+    const d = new Date();
+
+    const fileName =
+        `myworkout_backup_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.json`;
+
+    a.download = fileName;
+
+    a.click();
+
+    URL.revokeObjectURL(a.href);
+}
+
+function importData(event){
+
+    const file = event.target.files[0];
+
+    if(!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        try{
+
+            const imported =
+                JSON.parse(e.target.result);
+
+            if(
+                !imported.categories ||
+                !imported.history
+            ){
+                throw new Error();
+            }
+
+            if(
+                !confirm(
+                    "Import nadpisze obecne dane. Kontynuować?"
+                )
+            ){
+                return;
+            }
+
+            db = imported;
+
+            save();
+
+            renderPicker();
+            renderSettings();
+            renderHistory();
+            renderStats();
+
+            alert("Dane zostały zaimportowane.");
+
+        }catch(err){
+
+            alert("Nieprawidłowy plik kopii zapasowej.");
+
+        }
+    };
+
+    reader.readAsText(file);
+}
+setTimeout(applyTheme,0);
+</script>
+
+</body>
+</html>
